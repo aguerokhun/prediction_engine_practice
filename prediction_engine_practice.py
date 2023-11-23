@@ -118,7 +118,7 @@ train_and_save_classification_model('Crop_Data.csv')
 
 # Endpoints for predictions
 @app.route("/predict_regression/", methods=["POST"])
-def predict_regression():
+async def predict_regression():
     try:
         input_data = request.json
         # Preprocess input dictionary into a DataFrame
@@ -132,7 +132,7 @@ def predict_regression():
         return jsonify({"error": str(e)})
 
 @app.route("/predict_classification/", methods=["POST"])
-def predict_classification():
+async def predict_classification():
     try:
         input_data = request.json
         processed_input_data = preprocess_input_data(input_data)
