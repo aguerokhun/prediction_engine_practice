@@ -1,8 +1,8 @@
 pandas
 scikit-learn
 matplotlib
-joblib
+pickle
 fastapi
 uvicorn
-typing
-
+flask
+requests
