@@ -2,7 +2,6 @@ pandas
 scikit-learn
 matplotlib
 fastapi
-uvicorn
+gunicorn
 flask
 requests
-Flask[async]
