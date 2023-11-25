@@ -88,9 +88,25 @@ def train_and_save_classification_model(filename):
     y_pred_class = multi_output_classifier.predict(X_test_class)
     y_pred_class_season, y_pred_class_harvest = y_pred_class[:, 0], y_pred_class[:, 1]
 
-def preprocess_input_data(input_data):
+def preprocess_rgs_input_data(input_data):
     # Additional preprocessing steps if needed
-    return pd.DataFrame([input_data])
+    df = pd.DataFrame(input_data)
+    cols = ['label', 'Country']
+    df = df.rename(columns = cols)
+    df = pd.get_dummies(df[['label', 'Country']], drop_first=True)
+    return df
+
+def preprocess_cls_input_data(input_data):
+    # Additional preprocessing steps if needed
+    df = pd.DataFrame(input_data)
+    cols = ['label', 'Country', 'temperature', 'humidity', 'water availability', 'ph']
+    df = df.rename(columns = cols)
+    columns_to_encode = ['label', 'Country']
+    for col in columns_to_encode:
+        x = pd.get_dummies(df[col], prefix = col, drop_first=True)
+        df = pd.concat([df, x], axis = 1)
+        df.drop(col, axis = 1, inplace=True)
+    return df
 
 def load_and_predict_regression_model(input_data):
     # Load the trained regression model
@@ -122,7 +138,7 @@ def predict_regression():
     try:
         input_data = request.json
         # Preprocess input dictionary into a DataFrame
-        processed_input_data = preprocess_input_data(input_data)
+        processed_input_data = preprocess_rgs_input_data(input_data)
 
         # Call the function to load and predict using the regression model
         predictions = load_and_predict_regression_model(processed_input_data)
@@ -135,7 +151,7 @@ def predict_regression():
 def predict_classification():
     try:
         input_data = request.json
-        processed_input_data = preprocess_input_data(input_data)
+        processed_input_data = preprocess_cls_input_data(input_data)
         predictions = load_and_predict_classification_model(processed_input_data)
 
         return jsonify({"predictions": predictions})
