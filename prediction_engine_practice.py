@@ -5,6 +5,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_absolute_error, f1_score, accuracy_score, confusion_matrix
 import pickle
+from sklearn.preprocessing import LabelEncoder 
 import json
 from sklearn.multioutput import MultiOutputClassifier
 from flask_cors import CORS
@@ -28,7 +29,29 @@ def train_and_save_regression_model(filename):
 
     # Prepare the dataset for regression model
     X_reg = df[['label', 'Country']]
-    X_reg_encoded = pd.get_dummies(X_reg, drop_first=True)  # Using one-hot encoding
+    
+    # Create an example label encoder
+    rg_encoder = LabelEncoder()
+    label_encoders = {}
+
+    for col in X_reg:
+        # Creating a new LabelEncoder for each categorical column
+        label_encoder = LabelEncoder()
+        
+        # Fitting and transforming the column and saving the encoder
+        df[col + '_encoded'] = label_encoder.fit_transform(df[col])
+        label_encoders[col] = label_encoder
+    # Saving the label encoders using pickle
+    with open('label_encoders.pkl', 'wb') as file:
+        pickle.dump(label_encoders, file)
+            
+    df = df.drop(X_reg, axis=1)
+    df = df.rename(columns={col + '_encoded': col for col in X_reg})
+    X_reg_encoded = df[['label', 'Country']]
+
+    # Save the encoder to a file using pickle
+    with open('label_encoder.pkl', 'wb') as file:
+        pickle.dump(rg_encoder, file)
     numerical_cols = ['temperature', 'humidity', 'water availability', 'ph']
     y_regression = df[numerical_cols]
 
@@ -70,46 +93,86 @@ def train_and_save_classification_model(filename):
 
     # Fit and transform on training data
     df[numerical_cols] = scaler.fit_transform(df[numerical_cols])
-    
+    # Save the scaler to a file using pickle
+    with open('scaler.pkl', 'wb') as file:
+        pickle.dump(scaler, file)
+        
     X_class = df[['label', 'Country'] + numerical_cols]
-    X_class_encoded = pd.get_dummies(X_class, drop_first=True)  # Using one-hot encoding
-    y_classification_season = df['season']
+    categorical_cols = ['label', 'Country']
+    encoder = LabelEncoder()
+    label_encoders = {}
+
+    for col in categorical_cols:
+        # Creating a new LabelEncoder for each categorical column
+        label_encoder = LabelEncoder()
+        
+        # Fitting and transforming the column and saving the encoder
+        df[col + '_encoded'] = label_encoder.fit_transform(df[col])
+        label_encoders[col] = label_encoder
+    # Saving the label encoders using pickle
+    with open('label_encoders.pkl', 'wb') as file:
+        pickle.dump(label_encoders, file)
+            
+    df = df.drop(categorical_cols, axis=1)
+    df = df.rename(columns={col + '_encoded': col for col in categorical_cols})
+    X_class_encoded = df[categorical_cols]
+
     y_classification_harvest_season = df['harvest season']
     
-    # Split the data for training and testing the season classification model
-    X_train_class, X_test_class, y_train_class_season, y_test_class_season = train_test_split(X_class_encoded, y_classification_season, test_size=0.2, random_state=42)
+    # Split the data for training and testing the classification model
     X_train_class, X_test_class, y_train_class_harvest, y_test_class_harvest = train_test_split(X_class_encoded, y_classification_harvest_season, test_size=0.2, random_state=42)
 
-    # Train the MultiOutputClassifier with separate Random Forest classifiers for 'season' and 'harvest season'
-    multi_output_classifier = MultiOutputClassifier(RandomForestClassifier(n_estimators=100, random_state=42), n_jobs=-1)
-    multi_output_classifier.fit(X_train_class, pd.concat([y_train_class_season, y_train_class_harvest], axis=1))
+    rf_classifier_harvest = RandomForestClassifier(n_estimators=100, random_state=42)
+    rf_classifier_harvest.fit(X_train_class, y_train_class_harvest)
+    
+    # Save the trained model for 'harvest season'
+    with open('classification_model_harvest.pkl', 'wb') as model_file:
+        pickle.dump(rf_classifier_harvest, model_file)
 
-    # Save the trained model
-    with open('classification_model.pkl', 'wb') as model_file:
-        pickle.dump(multi_output_classifier, model_file)
-
-    # Metrics for 'season' Classification Model
-    y_pred_class = multi_output_classifier.predict(X_test_class)
-    y_pred_class_season, y_pred_class_harvest = y_pred_class[:, 0], y_pred_class[:, 1]
+    # Make predictions on the test set for 'harvest season'
+    y_pred_class_harvest = rf_classifier_harvest.predict(X_test_class)
 
 def preprocess_rgs_input_data(input_data):
     # Additional preprocessing steps if needed
     df = pd.DataFrame(input_data)
-    cols = ['label', 'Country']
-    df = df.rename(columns = cols)
-    df = pd.get_dummies(df[['label', 'Country']], drop_first=True)
+    cols_mapper = {'country':'Country'}
+    df = df.rename(columns = cols_mapper)
+    # Load label encoders
+    with open('label_encoders.pkl', 'rb') as file:
+        loaded_label_encoders = pickle.load(file)
+    # Assuming new_data is your new DataFrame with the same categorical columns
+    for col, label_encoder in loaded_label_encoders.items():
+        # Transforming the new data using the loaded label encoder
+        df[col] = label_encoder.transform(df[col])
     return df.values
 
 def preprocess_cls_input_data(input_data):
-    # Additional preprocessing steps if needed
-    df = pd.DataFrame(input_data)
-    cols = ['label', 'Country', 'temperature', 'humidity', 'water availability', 'ph']
-    df = df.rename(columns = cols)
+    # Check if input_data is already a dictionary
+    if isinstance(input_data, dict):
+        df = pd.DataFrame(input_data, index=[0])
+    else:
+        # Additional preprocessing steps if needed
+        df = pd.DataFrame(input_data)
+    
+    cols_mapper = {
+        'country':'Country',
+        'waterAvailability':'water availability',
+        'pH':'ph'
+    }
+    df = df.rename(columns = cols_mapper)
+    numerical_cols = ['temperature', 'humidity', 'water availability', 'ph']
     columns_to_encode = ['label', 'Country']
-    for col in columns_to_encode:
-        x = pd.get_dummies(df[col], prefix = col, drop_first=True)
-        df = pd.concat([df, x], axis = 1)
-        df.drop(col, axis = 1, inplace=True)
+    # Load label encoders
+    with open('label_encoders.pkl', 'rb') as file:
+        loaded_label_encoders = pickle.load(file)
+# Assuming new_data is your new DataFrame with the same categorical columns
+    for col, label_encoder in loaded_label_encoders.items():
+        # Transforming the new data using the loaded label encoder
+        df[col] = label_encoder.transform(df[col])
+        # Load the scaler from the file
+    with open('scaler.pkl', 'rb') as file:
+        loaded_scaler = pickle.load(file)
+    df[numerical_cols] = loaded_scaler.fit_transform(df[numerical_cols])
     return df.values
 
 def load_and_predict_regression_model(input_data):
