@@ -102,23 +102,16 @@ def train_and_save_classification_model(filename):
     encoder = LabelEncoder()
     label_encoders = {}
 
-    for col in categorical_cols:
-        # Creating a new LabelEncoder for each categorical column
-        label_encoder = LabelEncoder()
-        
+    for col in categorical_cols:           
         # Fitting and transforming the column and saving the encoder
-        df[col + '_encoded'] = label_encoder.fit_transform(df[col])
-        label_encoders[col] = label_encoder
+        df[col] = encoder.fit_transform(df[col])
+        label_encoders[col] = encoder
     # Saving the label encoders using pickle
     with open('label_encoders.pkl', 'wb') as file:
         pickle.dump(label_encoders, file)
-            
-    df = df.drop(categorical_cols, axis=1)
-    df = df.rename(columns={col + '_encoded': col for col in categorical_cols})
     X_class_encoded = df
-    print(X_class_encoded)
 
-    y_classification_harvest_season = df['harvest season']
+    y_classification_harvest_season = X_class_encoded['harvest season']
     
     # Split the data for training and testing the classification model
     X_train_class, X_test_class, y_train_class_harvest, y_test_class_harvest = train_test_split(X_class_encoded, y_classification_harvest_season, test_size=0.2, random_state=42)
