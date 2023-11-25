@@ -98,7 +98,7 @@ def preprocess_rgs_input_data(input_data):
     cols = ['label', 'Country']
     df = df.rename(columns = cols)
     df = pd.get_dummies(df[['label', 'Country']], drop_first=True)
-    return df
+    return df.values
 
 def preprocess_cls_input_data(input_data):
     # Additional preprocessing steps if needed
@@ -110,7 +110,7 @@ def preprocess_cls_input_data(input_data):
         x = pd.get_dummies(df[col], prefix = col, drop_first=True)
         df = pd.concat([df, x], axis = 1)
         df.drop(col, axis = 1, inplace=True)
-    return df
+    return df.values
 
 def load_and_predict_regression_model(input_data):
     # Load the trained regression model
