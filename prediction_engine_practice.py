@@ -157,7 +157,6 @@ def predict_classification():
         processed_input_data = preprocess_cls_input_data([input_data])
         predictions = load_and_predict_classification_model(processed_input_data)
 
-        predictions = load_and_predict_classification_model(processed_input_data)
         return jsonify({"predictions": predictions.tolist()})
     except Exception as e:
         return jsonify({"error": str(e)})
