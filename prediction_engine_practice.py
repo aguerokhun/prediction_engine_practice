@@ -187,7 +187,7 @@ def load_and_predict_regression_model(input_data):
 
 def load_and_predict_classification_model(input_data):
     # Load the trained classification model
-    with open('classification_model.pkl', 'rb') as model_file:
+    with open('classification_model_harvest.pkl', 'rb') as model_file:
         loaded_classification_model = pickle.load(model_file)
 
     # Make predictions using the loaded classification model
