@@ -142,12 +142,11 @@ def predict_regression():
     try:
         input_data = request.json
         # Preprocess input dictionary into a DataFrame
-        processed_input_data = preprocess_rgs_input_data(input_data)
+        processed_input_data = preprocess_rgs_input_data([input_data])
 
         # Call the function to load and predict using the regression model
         predictions = load_and_predict_regression_model(processed_input_data)
-
-        return jsonify({"predictions": predictions})
+        return jsonify({"predictions": predictions.tolist()})
     except Exception as e:
         return jsonify({"error": str(e)})
 
@@ -155,10 +154,11 @@ def predict_regression():
 def predict_classification():
     try:
         input_data = request.json
-        processed_input_data = preprocess_cls_input_data(input_data)
+        processed_input_data = preprocess_cls_input_data([input_data])
         predictions = load_and_predict_classification_model(processed_input_data)
 
-        return jsonify({"predictions": predictions})
+        predictions = load_and_predict_regression_model(processed_input_data)
+        return jsonify({"predictions": predictions.tolist()})
     except Exception as e:
         return jsonify({"error": str(e)})
 
