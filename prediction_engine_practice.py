@@ -162,7 +162,7 @@ def preprocess_cls_input_data(input_data):
 # Assuming new_data is your new DataFrame with the same categorical columns
     for col, label_encoder in loaded_label_encoders.items():
         # Transforming the new data using the loaded label encoder
-        df[col] = label_encoder.transform(df[col])
+        df[col] = loaded_label_encoders.transform(df[col])
         # Load the scaler from the file
     with open('scaler.pkl', 'rb') as file:
         loaded_scaler = pickle.load(file)
