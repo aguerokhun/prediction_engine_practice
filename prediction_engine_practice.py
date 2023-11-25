@@ -98,7 +98,7 @@ def train_and_save_classification_model(filename):
         pickle.dump(scaler, file)
         
     X_class = df[['label', 'Country'] + numerical_cols]
-    categorical_cols = ['label', 'Country']
+    categorical_cols = ['label', 'Country', 'harvest season']
     encoder = LabelEncoder()
     label_encoders = {}
 
@@ -115,13 +115,14 @@ def train_and_save_classification_model(filename):
             
     df = df.drop(categorical_cols, axis=1)
     df = df.rename(columns={col + '_encoded': col for col in categorical_cols})
-    X_class_encoded = df[categorical_cols]
+    X_class_encoded = df
+    print(X_class_encoded)
 
     y_classification_harvest_season = df['harvest season']
     
     # Split the data for training and testing the classification model
     X_train_class, X_test_class, y_train_class_harvest, y_test_class_harvest = train_test_split(X_class_encoded, y_classification_harvest_season, test_size=0.2, random_state=42)
-
+    print(X_train_class)
     rf_classifier_harvest = RandomForestClassifier(n_estimators=100, random_state=42)
     rf_classifier_harvest.fit(X_train_class, y_train_class_harvest)
     
