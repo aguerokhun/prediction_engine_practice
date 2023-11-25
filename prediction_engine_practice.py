@@ -7,10 +7,14 @@ from sklearn.metrics import mean_absolute_error, f1_score, accuracy_score, confu
 import pickle
 import json
 from sklearn.multioutput import MultiOutputClassifier
+from fastapi.middleware.cors import CORSMiddleware
 import requests
 from flask import Flask, request, jsonify
 
 app = Flask(__name__)
+
+#Allow all origins, methods and headers in order to handle the front-end CORS errors
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 def train_and_save_regression_model(filename):
     df = pd.read_csv(filename)
