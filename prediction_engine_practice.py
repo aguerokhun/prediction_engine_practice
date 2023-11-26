@@ -129,12 +129,12 @@ def preprocess_rgs_input_data(input_data):
     # Load label encoders
     with open('label_encoders.pkl', 'rb') as file:
         loaded_label_encoders = pickle.load(file)
-    # Assuming new_data is your new DataFrame with the same categorical columns
-    for col, label_encoder in loaded_label_encoders.items():
+    columns_to_encode = ['label', 'Country']
+    for col in columns_to_encode:
         # Transforming the new data using the loaded label encoder
+        label_encoder = loaded_label_encoders[col]
         df[col] = label_encoder.transform(df[col])
     return df.values
-
 def preprocess_cls_input_data(input_data):
     df = pd.DataFrame(input_data, index=[0])
     cols_mapper = {
