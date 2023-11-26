@@ -1,4 +1,5 @@
 import pandas as pd
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.impute import SimpleImputer
@@ -10,6 +11,7 @@ import json
 from sklearn.multioutput import MultiOutputClassifier
 from flask_cors import CORS
 import requests
+import os
 from flask import Flask, request, jsonify
 import csv
 
@@ -71,7 +73,19 @@ def train_and_save_regression_model(filename):
     # Metrics for Regression Model
     y_pred_reg = rf_regression_model.predict(X_test_reg)
     mae_reg = mean_absolute_error(y_test_reg, y_pred_reg)
+    residuals = y_test_reg - y_pred_reg
+    
+    os.makedirs('residuals_histograms', exist_ok=True)
 
+    for i in range(len(y_test_reg[0])):
+        plt.figure(figsize=(8, 5))
+        plt.hist(residuals[:, i], bins=30, color='blue', alpha=0.7)
+        plt.title(f'Histogram of Residuals for Target Variable {i+1}')
+        plt.xlabel('Residuals')
+        plt.ylabel('Frequency')
+        filename = os.path.join('residuals_histograms', f'residuals_histogram_{i}.png')
+        plt.savefig(filename)
+        plt.close()  
     return {'mae_reg': mae_reg}
 
 
