@@ -11,6 +11,7 @@ from sklearn.multioutput import MultiOutputClassifier
 from flask_cors import CORS
 import requests
 from flask import Flask, request, jsonify
+import csv
 
 app = Flask(__name__)
 
@@ -69,6 +70,10 @@ def train_and_save_regression_model(filename):
 
     # Metrics for Regression Model
     y_pred_reg = rf_regression_model.predict(X_test_reg)
+    mae_reg = mean_absolute_error(y_test_reg, y_pred_reg)
+
+    return {'mae_reg': mae_reg}
+
 
 def train_and_save_classification_model(filename):
     df = pd.read_csv(filename)
@@ -93,7 +98,6 @@ def train_and_save_classification_model(filename):
         pickle.dump(scaler, file)
     y_classification_harvest_season = df['harvest season']
     
-    X_class = df[['label', 'Country'] + numerical_cols]
     categorical_cols = ['label', 'Country', 'harvest season']
     label_encoders = {}
 
@@ -120,10 +124,13 @@ def train_and_save_classification_model(filename):
 
     # Make predictions on the test set for 'harvest season'
     y_pred_class_harvest = rf_classifier_harvest.predict(X_test_class)
+    f1_cls = f1_score(y_test_class_harvest, y_pred_class_harvest, average='weighted')
+
+    return {'f1_cls': f1_cls}
 
 def preprocess_rgs_input_data(input_data):
     # Additional preprocessing steps if needed
-    df = pd.DataFrame(input_data, index = [0])
+    df = pd.DataFrame(input_data, index=[0])
     cols_mapper = {'country':'Country'}
     df = df.rename(columns = cols_mapper)
     # Load label encoders
@@ -135,6 +142,7 @@ def preprocess_rgs_input_data(input_data):
         label_encoder = loaded_label_encoders[col]
         df[col] = label_encoder.transform(df[col])
     return df.values
+
 def preprocess_cls_input_data(input_data):
     df = pd.DataFrame(input_data, index=[0])
     cols_mapper = {
@@ -149,7 +157,6 @@ def preprocess_cls_input_data(input_data):
     with open('label_encoders.pkl', 'rb') as file:
         loaded_label_encoders = pickle.load(file)
     print(df)
-# Assuming new_data is your new DataFrame with the same categorical columns
     for col in columns_to_encode:
         # Transforming the new data using the loaded label encoder
         label_encoder = loaded_label_encoders[col]
@@ -181,10 +188,19 @@ def load_and_predict_classification_model(input_data):
     return predictions
 
 # Example usage:
-train_and_save_regression_model('Crop_Data.csv')
-train_and_save_classification_model('Crop_Data.csv')
+metrics_regression = train_and_save_regression_model('Crop_Data.csv')
+metrics_classification = train_and_save_classification_model('Crop_Data.csv')
+with open('metrics_results.csv', 'w', newline='') as csvfile:
+    fieldnames = ['metric', 'value']
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
+    # Write regression metrics
+    for metric, value in metrics_regression.items():
+        writer.writerow({'metric': metric, 'value': value})
 
+    # Write classification metrics
+    for metric, value in metrics_classification.items():
+        writer.writerow({'metric': metric, 'value': value})
 # Endpoints for predictions
 @app.route("/predict_regression/", methods=["POST"])
 def predict_regression():
