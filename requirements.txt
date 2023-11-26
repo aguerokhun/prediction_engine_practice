@@ -6,3 +6,4 @@ gunicorn
 flask
 requests
 flask_cors
+matplotlib
