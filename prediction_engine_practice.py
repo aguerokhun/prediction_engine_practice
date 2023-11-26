@@ -96,22 +96,22 @@ def train_and_save_classification_model(filename):
     # Save the scaler to a file using pickle
     with open('scaler.pkl', 'wb') as file:
         pickle.dump(scaler, file)
-        
+    y_classification_harvest_season = df['harvest season']
+    
     X_class = df[['label', 'Country'] + numerical_cols]
     categorical_cols = ['label', 'Country', 'harvest season']
-    encoder = LabelEncoder()
     label_encoders = {}
 
-    for col in categorical_cols:           
-        # Fitting and transforming the column and saving the encoder
-        df[col] = encoder.fit_transform(df[col])
-        label_encoders[col] = encoder
-    # Saving the label encoders using pickle
+    for col in categorical_cols:
+        label_encoder = LabelEncoder()
+        df[col] = label_encoder.fit_transform(df[col])
+        label_encoders[col] = label_encoder
+
     with open('label_encoders.pkl', 'wb') as file:
         pickle.dump(label_encoders, file)
     X_class_encoded = df.drop('harvest season', axis = 1)
+    print(X_class_encoded)
 
-    y_classification_harvest_season = df['harvest season']
     
     # Split the data for training and testing the classification model
     X_train_class, X_test_class, y_train_class_harvest, y_test_class_harvest = train_test_split(X_class_encoded, y_classification_harvest_season, test_size=0.2, random_state=42)
@@ -141,13 +141,7 @@ def preprocess_rgs_input_data(input_data):
     return df.values
 
 def preprocess_cls_input_data(input_data):
-    # Check if input_data is already a dictionary
-    if isinstance(input_data, dict):
-        df = pd.DataFrame(input_data, index=[0])
-    else:
-        # Additional preprocessing steps if needed
-        df = pd.DataFrame(input_data)
-    
+    df = pd.DataFrame(input_data, index=[0])
     cols_mapper = {
         'country':'Country',
         'waterAvailability':'water availability',
@@ -159,14 +153,16 @@ def preprocess_cls_input_data(input_data):
     # Load label encoders
     with open('label_encoders.pkl', 'rb') as file:
         loaded_label_encoders = pickle.load(file)
+    print(df)
 # Assuming new_data is your new DataFrame with the same categorical columns
-    for col, label_encoder in loaded_label_encoders.items():
+    for col in columns_to_encode:
         # Transforming the new data using the loaded label encoder
-        df[col] = loaded_label_encoders.transform(df[col])
+        label_encoder = loaded_label_encoders[col]
+        df[col] = label_encoder.transform(df[col])
         # Load the scaler from the file
     with open('scaler.pkl', 'rb') as file:
         loaded_scaler = pickle.load(file)
-    df[numerical_cols] = loaded_scaler.fit_transform(df[numerical_cols])
+    df[numerical_cols] = loaded_scaler.transform(df[numerical_cols])
     return df.values
 
 def load_and_predict_regression_model(input_data):
@@ -192,6 +188,7 @@ def load_and_predict_classification_model(input_data):
 # Example usage:
 train_and_save_regression_model('Crop_Data.csv')
 train_and_save_classification_model('Crop_Data.csv')
+
 
 # Endpoints for predictions
 @app.route("/predict_regression/", methods=["POST"])
