@@ -28,10 +28,9 @@ def train_and_save_regression_model(filename):
     df[numerical_cols] = imputer.fit_transform(df[numerical_cols])
 
     # Prepare the dataset for regression model
-    X_reg = df[['label', 'Country']]
+    X_reg = df[['label', 'Country', 'harvest season']]
     
     # Create an example label encoder
-    rg_encoder = LabelEncoder()
     label_encoders = {}
 
     for col in X_reg:
@@ -39,20 +38,16 @@ def train_and_save_regression_model(filename):
         label_encoder = LabelEncoder()
         
         # Fitting and transforming the column and saving the encoder
-        df[col + '_encoded'] = label_encoder.fit_transform(df[col])
+        df[col] = label_encoder.fit_transform(df[col])
         label_encoders[col] = label_encoder
     # Saving the label encoders using pickle
     with open('label_encoders.pkl', 'wb') as file:
         pickle.dump(label_encoders, file)
             
-    df = df.drop(X_reg, axis=1)
     df = df.rename(columns={col + '_encoded': col for col in X_reg})
     X_reg_encoded = df[['label', 'Country']]
 
     # Save the encoder to a file using pickle
-    with open('label_encoder.pkl', 'wb') as file:
-        pickle.dump(rg_encoder, file)
-    numerical_cols = ['temperature', 'humidity', 'water availability', 'ph']
     y_regression = df[numerical_cols]
 
     # Normalize numerical columns using Min-Max scaling
@@ -128,7 +123,7 @@ def train_and_save_classification_model(filename):
 
 def preprocess_rgs_input_data(input_data):
     # Additional preprocessing steps if needed
-    df = pd.DataFrame(input_data)
+    df = pd.DataFrame(input_data, index = [0])
     cols_mapper = {'country':'Country'}
     df = df.rename(columns = cols_mapper)
     # Load label encoders
