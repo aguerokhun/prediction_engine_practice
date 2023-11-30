@@ -245,7 +245,7 @@ def combined_predict(input_data):
 # Endpoint for combined prediction
 @app.route("/predict_combined/", methods=["POST"])
 def predict_combined():
-    input_data = requests.json
+    input_data = request.json
     return combined_predict(input_data)
 # Example usage:
 metrics_regression = train_and_save_regression_model('Crop_Data.csv')
