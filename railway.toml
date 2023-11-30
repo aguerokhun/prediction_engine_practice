@@ -1,6 +1,9 @@
-services:
-  - name: prediction_engine_practice
-    type: web
-    env: python=3.11
-    buildCommand: pip install -r requirements.txt
-    startcommand: gunicorn prediction_engine_practice:app --bind 0.0.0.0:$PORT
+[build]
+builder = "nixpacks"
+buildCommand = "echo building!"
+
+[deploy]
+startCommand = "echo starting!"
+healthcheckPath = "/"
+healthcheckTimeout = 100
+restartPolicyType = "never"
