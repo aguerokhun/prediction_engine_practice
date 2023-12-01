@@ -203,7 +203,7 @@ def load_and_predict_classification_model(input_data):
 
 def combined_predict(input_data):
     try:
-        if 'label' in input_data and 'country' in input_data:
+        if 'label' in input_data and 'country' in input_data and not("temperature" in input_data and "humidity" in input_data and "pH" in input_data and "waterAvailability" in input_data and "label" in input_data and "country" in input_data ):
             # If input has 'label' and 'crops', pass it to regression model
             regression_input = {
                 'label': input_data['label'],
@@ -211,13 +211,11 @@ def combined_predict(input_data):
             }
             processed_input_data = preprocess_rgs_input_data(regression_input)
             processed_input_data = processed_input_data.reshape(1, -1)
-            print(processed_input_data.shape)
 
         # Call the function to load and predict using the regression model
             regression_predictions = load_and_predict_regression_model(processed_input_data)
             regression_predictions = regression_predictions.tolist()
             regression_predictions = regression_predictions[0]
-            print(regression_predictions)
             
             regression_output = {
                 'temperature': regression_predictions[0],
@@ -232,7 +230,7 @@ def combined_predict(input_data):
             new_input = {**input_data, **regression_output}
             processed_input_data = preprocess_cls_input_data(new_input)
             classification_input = processed_input_data.reshape(1, -1)
-        else:
+        elif 'label' in input_data  and 'country' in input_data and "temperature" in input_data and "humidity" in input_data and "pH" in input_data and "waterAvailability" in input_data  and "label" in input_data and "country" in input_data:
             # If input doesn't have 'label' and 'crops', pass it directly to classification model
             processed_input_data = preprocess_cls_input_data(input_data)
             classification_input = processed_input_data.reshape(1, -1)
