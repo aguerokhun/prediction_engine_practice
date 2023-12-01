@@ -238,7 +238,7 @@ def combined_predict(input_data):
             classification_input = processed_input_data.reshape(1, -1)
         classification_predictions = load_and_predict_classification_model(classification_input)
 
-        return jsonify({"predictions": classification_predictions})
+        return jsonify({"predictions": classification_predictions.tolist()})
     except KeyError as e:
         return jsonify({"error": str(e)})
 
