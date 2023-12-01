@@ -247,7 +247,7 @@ def combined_predict(input_data):
 def predict_combined():
     input_data = request.json
     output = combined_predict(input_data)
-    return jsonify(output)
+    return output
     
 # Example usage:
 metrics_regression = train_and_save_regression_model('Crop_Data.csv')
