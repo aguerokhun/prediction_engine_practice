@@ -238,7 +238,7 @@ def combined_predict(input_data):
             classification_input = processed_input_data.reshape(1, -1)
         classification_predictions = load_and_predict_classification_model(classification_input)
 
-        return jsonify({"predictions": classification_predictions.tolist()})
+        return jsonify({"predictions": classification_predictions})
     except KeyError as e:
         return jsonify({"error": str(e)})
 
@@ -246,7 +246,9 @@ def combined_predict(input_data):
 @app.route("/predict_combined/", methods=["POST"])
 def predict_combined():
     input_data = request.json
-    return combined_predict(input_data)
+    output = combined_predict(input_data)
+    return jsonify(output)
+    
 # Example usage:
 metrics_regression = train_and_save_regression_model('Crop_Data.csv')
 metrics_classification = train_and_save_classification_model('Crop_Data.csv')
